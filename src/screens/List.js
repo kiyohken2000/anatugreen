@@ -10,6 +10,7 @@ import {
 import RenderItem from '../components/RenderItem';
 import axios from 'axios';
 import SearchBox from '../components/SearchBox';
+import { FAB } from 'react-native-paper';
 
 import { useNavigation, useRoute } from '@react-navigation/native';
 
@@ -19,6 +20,7 @@ export default function List() {
   const [isLoading, setIsLoading] = useState(false)
   const [word, setWord] = useState('')
   const [viewData, setViewData] = useState([])
+  const [limit, setLimit] = useState(10)
 
   useEffect(() => {
     fetchData()
@@ -36,9 +38,28 @@ export default function List() {
   const fetchData = async() => {
     try {
       setIsLoading(true)
-      const res = await axios.get('https://example-data.draftbit.com/restaurants?_limit=10')
+      const res = await axios.get(`https://example-data.draftbit.com/restaurants?_limit=${limit}`)
       setData(res.data)
       setViewData(res.data)
+    } catch(e) {
+      console.log('error', e)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadMore = async() => {
+    try {
+      setIsLoading(true)
+      setLimit(prev => prev + 10)
+      const res = await axios.get(`https://example-data.draftbit.com/restaurants?_limit=${limit}`)
+      setData(res.data)
+      if(!word) {
+        setViewData(res.data)
+      } else {
+        const filtered = data.filter((v) => v.name.toLowerCase().includes(word))
+        setViewData(filtered)
+      }
     } catch(e) {
       console.log('error', e)
     } finally {
@@ -78,6 +99,11 @@ export default function List() {
             );
           }}
         />
+        <FAB
+          style={styles.fab}
+          icon="plus"
+          onPress={() => loadMore()}
+        />
         </>
         :<ActivityIndicator />
       }
@@ -99,5 +125,10 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     paddingTop: 30
-  }
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 80,
+  },
 });
